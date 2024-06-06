@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Basic Usage</title>
+  
+ <!--<script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.0.1/dist/tesseract.min.js"></script>-->
+ <script src="js/tesseract/tesseract.min.js"></script>
+ 
+ 
+   
+
+  
+</head>
+<body>
+	<h1>OCR Tarjeta Bancaria Best</h1>
+	<input id="file" type="file">
+	<p>	<img id="imagen" hidden="true" height="400"></img></p>
+	<div id="porcentaje"></div>
+	<div id="resultado" style="color: blue;"></div>
+	<div id="tiempo" ></div>
+	<p/>
+	<div id="iban" style="background: yellow;color: red;background-size: 16pt;"></div>
+	<div id="error" style="color: red;"></div>
+
+<script>
+    const exampleImage = '/images/100199-MPV1.jpeg';
+    // const exampleImage = 'https://tesseract.projectnaptha.com/img/eng_bw.png';
+    
+    let image;
+    let worker ;
+    let inputFile = document.getElementById('file');
+    inputFile.addEventListener('change', (e) => {
+        image = URL.createObjectURL(e.target.files[0]);
+        document.getElementById('imagen').hidden = false;
+        document.getElementById('imagen').src = image;
+        document.getElementById('resultado').innerHTML='';
+        document.getElementById('tiempo').innerHTML='';
+        document.getElementById('iban').innerHTML='';
+        document.getElementById('error').innerHTML='';
+        worker = Tesseract.createWorker({
+        	workerPath: window.location.origin + "/js/tesseract/worker.min.js", //tesseract.js-1.0.10
+       	    langPath: window.location.origin + "/js/tesseract",
+       	    corePath: window.location.origin + "/js/tesseract/tesseract-core.wasm.js", //tesseract.js-core-0.1.0
+            logger: m => {console.log(m)
+            document.getElementById('porcentaje').innerHTML='Progreso:' + m.progress*100 + ' %';}
+          });
+          Tesseract.setLogging(true);
+        work();
+    }, false);
+
+    
+    async function work() {
+    	try {
+    		console.log('0------>'+new Date());
+    	   	 var d1 = new Date();
+    	      await worker.load();
+    	      await worker.loadLanguage('eng');
+    	      await worker.initialize('eng');
+    		console.log('1------>'+new Date());
+    	      let result = await worker.detect(image);
+    	      console.log(result);
+    	      console.log(result.script);
+    	    console.log('2------>'+new Date());
+    	      console.log(result.data);
+
+    	      result = await worker.recognize(image);
+    	      console.log('3------>'+new Date());
+    	      console.log( result.data);
+
+    	      await worker.terminate();
+    	      console.log('4------>'+new Date());
+    	      var d2 = new Date();
+    	      
+    	      document.getElementById('resultado').innerHTML=result.data.text;
+    	      document.getElementById('tiempo').innerHTML='tiempo OCR: '+(d2-d1)/1000 + ' seg' ;
+    	      extractIban(result.data.text);
+        } catch (err) {
+            console.log(err);
+            document.getElementById('error').innerHTML='ERROR: '+ err ;
+        }
+    	
+    }
+    
+    
+    
+    function getIban() {
+    	var request = new XMLHttpRequest();
+
+    	request.open('POST', 'http://localhost:8080/eContratoKyCWS/getIban', true);
+    	request.onload = function() {
+    	  // Begin accessing JSON data here
+    	  var data = JSON.parse(this.response);
+
+    	  if (request.status >= 200 && request.status < 400) {
+    	    data.forEach(movie => {
+    	      console.log(movie.title);
+    	    })
+    	  } else {
+    	    console.log('error');
+    	  }
+    	};
+
+    	request.send();
+    }
+    
+    
+    const extractIban = async (txt) => {
+    	console.log('ejecutando...');
+        var a = {
+       		 texto : txt
+        }
+
+    	  const response = await fetch('http://localhost:8080/eContratoKyCWS/getIban', {
+    	    method: 'POST',
+    	    body: JSON.stringify(a), // string or object
+    	    headers: {
+    	      'Content-Type': 'application/json'
+    	    }
+    	  });
+    	  const myJson = await response.json(); //extract JSON from the http response
+    	  // do something with myJson
+    	  console.log('response: ' + myJson);
+    	  document.getElementById('iban').innerHTML='ENCONTRADO IBAN:' + myJson.iban + '     CCC:'+myJson.ccc;
+    	}
+    
+    
+</script>
+
+</body>
+</html>

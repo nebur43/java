@@ -1,0 +1,21 @@
+<app-loading *ngIf="loading"></app-loading>
+<div class="container mb-4 border border-danger p-4" *ngIf="!loading">
+    <h6 class="text-danger">{{error}}</h6>
+    <div class="row mb-3">
+        <div class="col">
+            <textarea class="form-control" rows="6" placeholder="inserta comentario" aria-label="With textarea" [(ngModel)]="comentario"></textarea>
+        </div>
+    </div>
+    <div class="row mb-3">
+        <div class="col-md-auto">
+            <label>Usuario</label>
+            <input type="text" class="form-control" placeholder="@nombre" maxlength="20" size="20" [(ngModel)]="usuario">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <button type="button" class="btn btn-danger" (click)="onCrear()">Crear comentario</button>
+        </div>
+    </div>
+
+</div>

@@ -1,0 +1,26 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+	xmlns:h="http://xmlns.jcp.org/jsf/html"
+	xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+<h:head>
+<title>Hola mundo</title>
+</h:head>
+<h:body>
+   #{paginaPrincipal.saludo}
+   
+   <h:form>
+	<h:commandButton action="#{paginaPrincipal.avanzar}" value="Iniciar foward"></h:commandButton>
+	<h:commandButton action="#{paginaPrincipal.avanzarRedirect}" value="Iniciar redirect"></h:commandButton>
+	<h:commandButton action="#{paginaPrincipal.avanzarRedirect2}" value="Iniciar redirect2"></h:commandButton>
+	<h:commandButton action="#{paginaPrincipal.avanzarMal}" value="Iniciar Error"></h:commandButton>
+	
+	
+   </h:form>
+   <h:link value="link" outcome="/adios.xhtml" />
+   <h:button action="#{paginaPrincipal.avanzar}" value="Iniciar button no command"></h:button>
+</h:body>
+</html>

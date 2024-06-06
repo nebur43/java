@@ -1,2 +1,2 @@
 # java
-pruebas con java
+pruebas hechas en java

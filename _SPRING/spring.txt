@@ -1,0 +1,52 @@
+*** SPRING ***
+http://www.jtech.ua.es/j2ee/publico/spring-2012-13/sesion01-apuntes.html
+
+- diferencia entre desarrollar con Spring y con JavaEE estándar:
+	- JavaEE: 
+		- uso de un servidor de aplicaciones, ya que los APIs los implementa el propio servidor
+		- nos atamos al servidor de aplicaciones
+	- Spring:
+		- servidor web convencional al estilo Tomcat para desplegar la aplicación
+		- nos atamos a las APIs de Spring
+		
+
+
+**  EN APLICACIONES WEB ***
+	- Desplegar un listener de ContextLoaderListener en web.xml
+	- añadir context-param: contextConfigLocation // /WEB-INF/classes/applicationContext.xml
+	
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<web-app ...>
+  <context-param>
+    <param-name>contextConfigLocation</param-name>
+    <param-value>/WEB-INF/misBeans.xml</param-value>
+  </context-param>
+   
+  <listener>
+     <listener-class>
+        org.springframework.web.context.ContextLoaderListener
+     </listener-class>
+  </listener>
+   
+  <!--  resto de etiquetas del web.xml -->
+  ...
+</web-app>
+
+
+
+	- esto levanta WebApplicationContext
+	
+ServletContext sc = getServletContext();
+WebApplicationContext wac = WebApplicationContextUtils.getWebApplicationContext(sc);
+IUsuariosBO iub = wac.getBean(IUsuariosBO.class);	
+IUsuariosBO iub = wac.getBean("usuariosBO", IUsuariosBO.class);
+
+
+
+
+**  EN APLICACIONES ESCRITORIO ***
+ApplicationContext contenedor =    new ClassPathXmlApplicationContext("configuracion.xml");
+ApplicationContext contenedor =    new ClassPathXmlApplicationContext("configuracion.xml");
+IUsuariosBO iub = contenedor.getBean(IUsuariosBO.class); 
+UsuarioTO uto = igu.login("javaee", "javaee"); 
+IUsuariosBO iub = contenedor.getBean("usuariosBO", IUsuariosBO.class);

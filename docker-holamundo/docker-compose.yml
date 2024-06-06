@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+    holamundo-ws:
+        image: nebur43/holamundo-ws:1.1
+        ports:
+            - "80:8080"

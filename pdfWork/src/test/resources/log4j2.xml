@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- https://logging.apache.org/log4j/2.x/manual/configuration.html
+
+niveles de traza para log4j2:
+OFF
+FATAL
+ERROR
+WARN
+INFO
+DEBUG
+TRACE
+ALL
+
+para usar otro log4j2.xml en producción se puede:
+	- arrancar la JVM con -Dlog4j.configurationFile=C:\workspacePruebas\eContNotify\log4j2.xml
+	- meter en el classpath el path: C:\workspacePruebas\eContNotify\log4j2.xml
+
+-->
+
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="consola" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss,SSS 'GMT' Z} [%p] [%t] [%c{1}.%M (%L)] - %m%n"/>
+        </Console>
+		
+    </Appenders>
+
+	<Loggers>
+		<Logger name="es.orange.econtrato" level="debug" additivity="false">
+		  <AppenderRef ref="consola"/>
+		</Logger>
+		
+		<Root level="WARN">
+		  <AppenderRef ref="consola"/>
+		</Root>
+		<!-- Asynchronous Logging (produccion)
+		<AsyncRoot level="DEBUG">
+			<AppenderRef ref="stdout" />
+			<AppenderRef ref="fout"/>
+		</AsyncRoot>
+		
+		en maven:
+		<dependency>
+			<groupId>com.lmax</groupId>
+			<artifactId>disruptor</artifactId>
+			<version>3.4.2</version>
+		</dependency>
+
+		-->
+		
+	</Loggers>	
+
+	
+</Configuration>
+

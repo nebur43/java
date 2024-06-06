@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Basic Usage</title>
+  
+ <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.0.1/dist/tesseract.min.js"></script>
+
+  
+</head>
+<body>
+	<h1>OCR Tarjeta Bancaria</h1>
+	<div id="porcentaje_f1"></div>
+	<div id="porcentaje_f2"></div>
+	<div id="porcentaje_f3"></div>
+	<div id="porcentaje_f4"></div>
+	<div id="porcentaje_f5"></div>
+	<div id="porcentaje_f6"></div>
+	<div id="porcentaje_f7"></div>
+	<div id="porcentaje_f8"></div>
+	<div id="porcentaje_f9"></div>
+	<div id="porcentaje_f10"></div>
+	<div id="porcentaje_f11"></div>
+	<div id="porcentaje_f12"></div>
+	<div id="porcentaje_f13"></div>
+	<div id="porcentaje_f14"></div>
+	<div id="porcentaje_f15"></div>
+
+<script>
+    const exampleImage = '/images/100199-MPV1.jpeg';
+    // const exampleImage = 'https://tesseract.projectnaptha.com/img/eng_bw.png';
+    
+
+	inicio('100199-MPV1.jpeg',1);
+	inicio('100239-MPV1.jpeg',2);
+	inicio('100319-MPV1.jpeg',3);
+	inicio('101140-MPV1.jpeg',4);
+	inicio('101666-MPV1.jpeg',5);
+	inicio('101697-MPV1.jpeg',6);
+	inicio('101920-MPV1.jpeg',7);
+	inicio('102174-MPV1.jpeg',8);
+	inicio('102246-MPV1.jpeg',9);
+	inicio('102292-MPV1.jpeg',10);
+	inicio('103092-MPV1.jpeg',11);
+	inicio('103713-MPV1.jpeg',12);
+	inicio('106984-MPV1.jpeg',13);
+	inicio('107627-MPV1.jpeg',14);
+	inicio('107801-MPV1.jpeg',15);
+    
+    
+    
+    function inicio (f,i) {
+        let image = '/images/'+f;
+        let worker = Tesseract.createWorker({
+            logger: m => {
+            //console.log(m)
+            document.getElementById('porcentaje_f'+i).innerHTML=f+' - Progreso:' + m.progress*100 + ' %';}
+          });
+          Tesseract.setLogging(true);
+        work(worker,i,image,f);
+    }
+
+    
+    
+
+    async function work(worker,i,image,f) {
+    	try {
+    		console.log('0------>'+new Date());
+    	   	 var d1 = new Date();
+    	      await worker.load();
+    	      await worker.loadLanguage('eng');
+    	      await worker.initialize('eng');
+    		console.log('1------>'+new Date());
+    	      let result = await worker.detect(image);
+    	      console.log(result);
+    	      console.log(result.script);
+    	    console.log('2------>'+new Date());
+    	      console.log(result.data);
+
+    	      result = await worker.recognize(image);
+    	      console.log('3------>'+new Date());
+    	      console.log( result.data);
+
+    	      await worker.terminate();
+    	      console.log('4------>'+new Date());
+    	      var d2 = new Date();
+    	      
+    	      document.getElementById('porcentaje_f'+i).innerHTML=f+' - tiempo OCR: '+(d2-d1)/1000 + ' seg' ;
+    	      extractIban(result.data.text,i,f);
+        } catch (err) {
+            console.log(err);
+            document.getElementById('porcentaje_f'+i).innerHTML=f+' - ERROR: '+ err ;
+        }
+    	
+    }
+    
+    
+    
+    function getIban() {
+    	var request = new XMLHttpRequest();
+
+    	request.open('POST', 'http://localhost:8080/eContratoKyCWS/getIban', true);
+    	request.onload = function() {
+    	  // Begin accessing JSON data here
+    	  var data = JSON.parse(this.response);
+
+    	  if (request.status >= 200 && request.status < 400) {
+    	    data.forEach(movie => {
+    	      console.log(movie.title);
+    	    })
+    	  } else {
+    	    console.log('error');
+    	  }
+    	};
+
+    	request.send();
+    }
+    
+    
+    const extractIban = async (txt,i) => {
+    	console.log('ejecutando...');
+        var a = {
+       		 texto : txt
+        }
+
+    	  const response = await fetch('http://localhost:8080/eContratoKyCWS/getIban', {
+    	    method: 'POST',
+    	    body: JSON.stringify(a), // string or object
+    	    headers: {
+    	      'Content-Type': 'application/json'
+    	    }
+    	  });
+    	  const myJson = await response.json(); //extract JSON from the http response
+    	  // do something with myJson
+    	  console.log('response: ' + myJson);
+    	  document.getElementById('porcentaje_f'+i).innerHTML=document.getElementById('porcentaje_f'+i).innerHTML + ' - ENCONTRADO IBAN:' + myJson.iban + '     CCC:'+myJson.ccc;
+    	}
+    
+    
+</script>
+
+</body>
+</html>

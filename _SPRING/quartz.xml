@@ -1,0 +1,18 @@
+
+antiguo:
+
+  <bean id="introducirPenalizacionCompromisoPermanenciaJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+    <property name="targetObject"><ref bean="gestorContratacionBatch"/></property>
+    <property name="targetMethod"><value>introducirPenalizacionCompromisoPermanencia</value></property>
+ 	<property name="concurrent" value="false"/>
+  </bean>
+
+  <bean id="introducirPenalizacionCompromisoPermanenciaTrigger" class="org.springframework.scheduling.quartz.CronTriggerBean">
+    <property name="jobDetail"><ref bean="introducirPenalizacionCompromisoPermanenciaJob"/></property>    
+    <!-- descripcion en http://quartz.sourceforge.net/javadoc/org/quartz/CronTrigger.html -->
+    <property name="cronExpression"><value>${contratacion.batch.introducirPenalizacionCompromisoPermanencia.interval}</value></property>
+  </bean> 
+  
+  
+  
+reciente:

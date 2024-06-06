@@ -1,0 +1,8 @@
+{
+    "/Prod": {
+        "target": "https://zckd2ljhsj.execute-api.eu-central-1.amazonaws.com",
+        "secure": false,
+        "changeOrigin": true,
+        "logLevel": "debug"
+    }
+}

@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Basic Usage</title>
+  <!-- 
+ <script async src="https://cdn.jsdelivr.net/npm/tesseract.js@2.0.1/dist/tesseract.min.js"></script>
+ -->
+ <script async src="js/opencv.js"></script>
+
+  
+</head>
+<body>
+	<h1>OCR Tarjeta Bancaria Detección ONLINE</h1>
+  <div>
+      <video id="videoInput" width="1280" height="720"></video>
+      <canvas id="output"></canvas>
+      <div id="info"></div>
+      <div id="iban" style="background: yellow;color: red;background-size: 16pt;"></div>
+  </div>
+
+<script>
+    let video = document.getElementById('videoInput');
+   
+     
+    let streaming; 
+    const FPS = 30;
+    navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+    .then(function(stream) {
+        streaming = stream;
+        video.srcObject = streaming;
+        video.play();
+    })
+    .catch(function(err) {
+        console.log("An error occurred! " + err);
+    });
+    let timer;
+
+    function processVideo() {
+        try {
+            if (!streaming) {
+                src.delete();
+                dst.delete();
+                return;
+            }
+            let begin = Date.now();
+            //const tamVidWidth = 800;
+            //const tamVidHeight = 600;
+            const tamVidWidth = 1280;
+            const tamVidHeight = 720;
+          
+            cap.read(src);
+            
+            let dsize = new cv.Size(tamVidWidth, tamVidHeight);
+            cv.resize(src, dst, dsize, 0, 0, cv.INTER_AREA);
+            cv.imshow('output', dst);
+            let canvas = document.getElementById("output");
+        	//let image = canvasToImage();
+        	
+        	if (!timer) {
+        		timer = setTimeout( () => {
+        			console.log('Capturando imagen...');
+            		let image = canvasToImage();
+            		timer = undefined;
+            		doOCR(image);
+            	},1000);
+        	} 
+        	
+        	
+        	
+
+        	 
+        	 let delay = 1000/FPS - (Date.now() - begin);
+             setTimeout(processVideo, delay);
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
+
+
+    function canvasToImage() {
+      //Codigo de Canvas a IMAGE...
+        let canvas = document.getElementById("output");
+        let image = canvas.toDataURL("image/png").substring(22);
+        
+        /*
+        worker.recognize(image).then((data) => {
+        	console.log(data);
+        }).catch((e) => {
+        	console.log(e);
+        });
+     */
+    // fin
+    	return image;
+    }
+
+    let totalRequests = 0;
+    let totalResponses = 0;
+    
+    async function doOCR(image) {
+      //console.log('findText:'+ resultDetect);
+      var request = new XMLHttpRequest();
+      
+      var a = {
+    		  processID:'S8-OPER-AAAAMMDD-XXXXXXXX',
+    		  parameters:{
+    			  systemID:'KyC',
+    			  petitionID:'S8-PET-AAAAMMDD-XXXXXXXXX',
+    			  brand: "1",
+    			  docID: "51668416M",
+    			  typeDocID: "IDENTITY"
+    		  },
+    		  receipt: {
+    			contentType: "image/jpeg",
+    			content: image
+         }
+      };
+
+      totalRequests ++;
+      const response = await fetch('http://localhost:8080/eContratoKyCWS/scanReceipt', {
+  	    method: 'POST',
+  	    body: JSON.stringify(a), // string or object
+  	    headers: {
+  	      'Content-Type': 'application/json'
+  	    }
+  	  });
+  	  const myJson = await response.json(); //extract JSON from the http response
+  	  // do something with myJson
+  	  console.log('response: ' + myJson);
+  	console.log('response.iban: ' + myJson.receiptData.iban);
+  	totalResponses ++;
+  	document.getElementById('info').innerHTML='llamdas OCR hechas: ' + totalRequests + ' --- llamadas OCR recibidas: ' + totalResponses;
+  	contSeq++;
+  	  if (myJson.receiptData.iban!=undefined) {
+  		contSeq = 0;
+  		console.log('encontrado iban:' + myJson.receiptData.iban);
+  		document.getElementById('iban').innerHTML='ENCONTRADO IBAN:' + myJson.receiptData.iban + '     CCC:'+myJson.receiptData.ccc;
+  	  } else {
+  		  if (contSeq > 4) {
+  			document.getElementById('iban').innerHTML='BUSCANDO IBAN...'
+  		  } 
+  	  }
+  	  
+      
+      
+
+    }
+
+    let contSeq=0; 
+    	
+    // schedule the first one.
+    setTimeout(() => {
+    	/*
+    	 worker = Tesseract.createWorker({
+    	        logger: m => console.log(m)
+    	      });
+		Tesseract.setLogging(true);
+		*/
+        capture = false;
+        src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+        dst = new cv.Mat(video.height, video.width, cv.CV_8UC1);
+        cap = new cv.VideoCapture(video);
+        document.getElementById('info').innerHTML='0 llamadas OCR hechas...'
+        document.getElementById('iban').innerHTML='BUSCANDO IBAN...'
+        processVideo();
+    }, 5000);
+    
+
+
+
+
+
+
+    
+</script>
+
+</body>
+</html>

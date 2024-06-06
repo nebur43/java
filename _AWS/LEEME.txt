@@ -1,0 +1,26 @@
+
+* HOLAMUNDO LLAMADAS LAMBDA *
+(spain)
+python 3.8: 									cold start: 398ms - warn start: 108/63/41/67
+nodejs18 typescript: 							cold start: 573ms - warn start: 93/131/231/200
+java 11 MemorySize 512:							cold start: 762ms - warn start: 72/78/88/66
+
+(frankfurt)
+java 11 snapstart MemorySize 512:				cold start: 1029ms - warn start: 111/109/153/139
+java 11 MemorySize 512:							cold start: 830ms - warn start: 124/137/104/139
+
+* springboot 2 * 
+java 11 snapstart sin tomcat MemorySize 512:	cold start: 1400ms - warn start: 111/109/153/139
+
+* springboot 3 *
+java 17 snapstart sin tomcat MemorySize 512:	cold start: 1304ms - warn start: 72/75/62/64/69
+
+
+* dynamo-app LLAMADAS LAMBDA *
+(spain)
+java 11 MemorySize 512:							cold start: 4850ms - warn start: 222/147/266
+java 11 MemorySize 2048:						cold start: 2950ms - warn start: 299/129/275/284
+
+(frankfurt)
+java 11 snapstart MemorySize 512:				cold start: xxxxms - warn start: xx/xx/xx
+java 11 snapstart MemorySize 2048:				cold start: 1767ms - warn start: 149/134/127

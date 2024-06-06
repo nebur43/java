@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>OpenCV OCR</title>
+    <script async src="js/opencv.js"></script>
+    <script async src="js/tesseract.min.js"></script>
+    <style>
+        canvas,
+        video {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <!--video id="videoInput" width="640" height="480"></video-->
+        <video id="videoInput"></video>
+        <canvas id="output"></canvas>
+    </div>
+    <div>
+        <canvas id="canvasOutputContours"></canvas>
+        <canvas id="canvasOutput" width="376" height="282"></canvas>
+        <canvas id="canvasOutputBorders"></canvas>
+        <canvas id="canvasOutputCapture"></canvas>
+        <canvas id="canvasOutputTransform"></canvas>
+        <canvas id="canvasOutputContoursCandidates"></canvas>
+        <!--canvas id="canvasOutput1" width="376" height="282"></canvas-->
+    </div>
+</body>
+<script>
+
+    /*const qvgaConstraints = {
+        video: { width: { exact: 320 }, height: { exact: 240 } }
+    };*/
+    const vgaConstraints = {
+        video: { width: { exact: 640 }, height: { exact: 480 } }
+    };
+    const hdConstraints = {
+        video: { width: { exact: 1280 }, height: { exact: 720 } }
+    };
+    const fullHdConstraints = {
+        video: { width: { exact: 1920 }, height: { exact: 1080 } }
+    };
+    const fourKConstraints = {
+        video: { width: { exact: 4096 }, height: { exact: 2160 } }
+    };
+    const eightKConstraints = {
+        video: { width: { exact: 7680 }, height: { exact: 4320 } }
+    };
+    const constraintses = [eightKConstraints, fourKConstraints, fullHdConstraints, hdConstraints, vgaConstraints];
+    function captureImage(src, srcViewArea, pointRectView1, pointRectView2, srcCaptureArea, pointRect1, pointRect2, srcRectArea) {
+        return new Promise((resolve, reject) => {
+            try {
+                let thr = new cv.Mat();
+                cv.cvtColor(srcCaptureArea, thr, cv.COLOR_BGR2GRAY);
+                //cv.cvtColor(srcCaptureArea, thr, cv.COLOR_BGR2GRAY, 0);
+
+                let borders = new cv.Mat();
+                cv.cvtColor(srcCaptureArea, borders, cv.COLOR_RGB2GRAY, 0);
+                cv.Canny(srcCaptureArea, borders, 0.666, 1.333, 3, false);
+
+                cv.threshold(thr, thr, 70, 255, cv.THRESH_BINARY);
+                //cv.threshold(thr, thr, 120, 200, cv.THRESH_BINARY);
+
+                let contours = new cv.MatVector();
+                let hierarchy = new cv.Mat();
+                let indexContour = 0;
+                let areaContour = 0;
+                let perimeterContour = 0;
+
+                cv.imshow('canvasOutputCapture', srcCaptureArea);
+                cv.imshow('canvasOutputContours', thr);
+                cv.imshow('canvasOutputBorders', borders);
+
+                cv.findContours(thr, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                //cv.findContours(thr, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+                //cv.findContours(borders, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+                //cv.findContours(borders, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                //cv.findContours(thr, contours, hierarchy, cv.RETR_CCOMP, cv.CHAIN_APPROX_SIMPLE);
+                //cv.findContours(thr, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPLE);
+                //cv.findContours(borders, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                //cv.findContours(thr.clone(), contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+                let poly = new cv.Mat();
+                let percent = 0; let contoursSize = contours.size();
+                console.log('Contours Size -> ' + contoursSize);
+                let sortableContours = [];
+                if (contoursSize > 0) {
+
+                    for (let i = 0; i < contours.size(); i++) {
+                        let cnt = contours.get(i);
+                        let area = cv.contourArea(cnt, false);
+                        let perim = cv.arcLength(cnt, false);
+                        sortableContours.push({ areaSize: area, perimiterSize: perim, contour: cnt });
+                    }
+
+                    sortableContours = sortableContours.sort((item1, item2) => {
+                        return (item1.areaSize > item2.areaSize) ? -1 :
+                            (item1.areaSize < item2.areaSize) ? 1 : 0;
+                    }).slice(0, 5);
+
+                    let sortableContoursVector = new cv.MatVector();
+                    let sortableContoursdrawing = cv.Mat.zeros(thr.cols, thr.rows, cv.CV_8UC3);
+                    //let sortableContoursdrawing = cv.Mat.zeros(thr.rows, thr.cols, cv.CV_8UC1);
+                    //let sortableContoursdrawing = cv.Mat.zeros(borders.cols, borders.rows, cv.CV_8UC3);
+                    sortableContours.forEach( c => sortableContoursVector.push_back(c.contour));
+                    for (let i = 0; i < sortableContours.length; i++) {
+                        let color = new cv.Scalar(Math.round(Math.random() * 255),
+                                Math.round(Math.random() * 255), Math.round(Math.random() * 255));
+                        cv.drawContours(sortableContoursdrawing, sortableContoursVector, i, color, 1, cv.LINE_8, hierarchy, 100);
+                    }
+                    cv.imshow('canvasOutputContoursCandidates', sortableContoursdrawing);
+
+                    /*
+                    for (let index = 0; index < contoursSize; index++) {
+                        //let cnt = contours.get(i);
+                        let area = cv.contourArea(contours.get(index), false);
+                        let perimeter = cv.arcLength(contours.get(index), false);
+                        if (area > areaContour) {
+                            areaContour = area;
+                            perimeterContour = perimeter;
+                            indexContour = index;
+                        }
+                    }*/
+
+                    //cv.approxPolyDP(sortableContours[0].contour, poly, 5, true);
+                    //cv.approxPolyDP(sortableContours[0].contour, poly, 0.05 * sortableContours[0].perimiterSize, true);
+                    cv.approxPolyDP(sortableContours[0].contour, poly, 0.15 * sortableContours[0].perimiterSize, true);
+                    //poly = new cv.Mat();
+                    //cv.approxPolyDP(contours.get(indexContour), poly, 5, true);
+                    //cv.approxPolyDP(contours.get(indexContour), poly, 0.05 * perimeterContour, true);
+                    //cv.approxPolyDP(contours.get(indexContour), poly, 5, true);
+                }
+                console.log('Rows -> ' + poly.rows);
+                //percent = (areaContour * 100) / srcRectArea;
+                percent = cv.contourArea(sortableContours[0].contour, false) * 100 / srcRectArea;
+                console.log('RECT AREA -> ' + percent);
+                console.log('SRC AREA -> ' + srcRectArea);
+                if (poly.rows === 4 && percent > 98 && percent < 100) {
+
+                    //console.log('PERCENT -> ' + percent);
+                    //let rect = cv.boundingRect(contours.get(indexContour));
+                    let rect = cv.boundingRect(sortableContours[0].contour);
+                    let rectPoint1 = new cv.Point(rect.x, rect.y);
+                    let rectPoint2 = new cv.Point(rect.x + rect.width, rect.y + rect.height);
+
+                    console.log('RECT AREA -> ' + (rect.width * rect.height));
+
+                    console.log('----------------------------------------------------------------');
+                    console.log('-- rectPoint1.x <= pointRect1.x ' + (rectPoint1.x <= pointRect1.x));
+                    console.log('-- rectPoint1.x ' + (rectPoint1.x));
+                    console.log('-- pointRect1.x ' + (pointRect1.x));
+                    console.log('--');
+                    console.log('-- rectPoint2.x >= pointRect2.x ' + (rectPoint2.x >= pointRect2.x));
+                    console.log('-- rectPoint2.x ' + rectPoint2.x);
+                    console.log('-- pointRect2.x ' + pointRect2.x);
+                    console.log('--');
+                    console.log('-- rectPoint1.y <= pointRect1.y ' + (rectPoint1.y <= pointRect1.y));
+                    console.log('-- rectPoint1.y ' + rectPoint1.y);
+                    console.log('-- pointRect1.y ' + pointRect1.y);
+                    console.log('--');
+                    console.log('-- rectPoint2.y >= pointRect2.y ' + (rectPoint2.y >= pointRect2.y));
+                    console.log('-- rectPoint2.y ' + rectPoint2.y);
+                    console.log('-- pointRect2.y ' + pointRect2.y);
+                    console.log('----------------------------------------------------------------');
+                    console.log('PERCENT -> ' + percent);
+
+                    if (rectPoint1.x <= pointRect1.x && rectPoint2.x >= pointRect2.x &&
+                        rectPoint1.y <= pointRect1.y && rectPoint2.y >= pointRect2.y) {
+
+                        let qPts = [poly.data32F[0], poly.data32F[1], poly.data32F[2], poly.data32F[3],
+                        poly.data32F[6], poly.data32F[7], poly.data32F[4], poly.data32F[5]];
+                        console.log(qPts);
+                        let sqPts = [rect.x, rect.y, rect.x, (rect.y + rect.height),
+                        (rect.x + rect.width), rect.y, (rect.x + rect.width), rect.y + rect.height];
+                        console.log(sqPts);
+
+                        let quadPts = cv.matFromArray(4, 1, cv.CV_32FC2, qPts);
+                        let squrePts = cv.matFromArray(4, 1, cv.CV_32FC2, sqPts);
+                        let transmtx = cv.getPerspectiveTransform(quadPts, squrePts);
+                        let transformed = cv.Mat.zeros(srcCaptureArea.cols, srcCaptureArea.rows, cv.CV_8UC3);
+                        cv.warpPerspective(srcCaptureArea, transformed, transmtx, srcCaptureArea.size());
+
+                        //let P1 = new cv.Point(poly.data32S[0], poly.data32S[1]);
+                        //let P2 = new cv.Point(poly.data32S[2], poly.data32S[3]);
+                        //let P3 = new cv.Point(poly.data32S[4], poly.data32S[5]);
+                        //let P4 = new cv.Point(poly.data32S[6], poly.data32S[7]);
+
+                        //cv.line(srcCaptureArea, P1, P2, new cv.Scalar(0, 0, 255));
+                        //cv.line(srcCaptureArea, P2, P3, new cv.Scalar(0, 0, 255));
+                        //cv.line(srcCaptureArea, P3, P4, new cv.Scalar(0, 0, 255));
+                        //cv.line(srcCaptureArea, P4, P1, new cv.Scalar(0, 0, 255));
+
+                        /*let point1 = new cv.Point(rect.x, rect.y);
+                        let point2 = new cv.Point(rect.x + rect.width, rect.y + rect.height);
+                        cv.rectangle(srcCaptureArea, point1, point2, new cv.Scalar(0, 255, 0), 2, cv.LINE_AA, 0);*/
+
+                        cv.imshow('canvasOutputTransform', srcCaptureArea);
+
+
+
+
+                        /*let foundContour = sortableContours[0].contour;
+
+                        let corner1 = new cv.Point(foundContour.data32S[0], foundContour.data32S[1]);
+                        let corner2 = new cv.Point(foundContour.data32S[2], foundContour.data32S[3]);
+                        let corner3 = new cv.Point(foundContour.data32S[4], foundContour.data32S[5]);
+                        let corner4 = new cv.Point(foundContour.data32S[6], foundContour.data32S[7]);
+
+                        let cornerArray = [{ corner: corner1 }, { corner: corner2 }, { corner: corner3 }, { corner: corner4 }];
+                        cornerArray.sort((item1, item2) => { return (item1.corner.y < item2.corner.y) ? -1 : (item1.corner.y > item2.corner.y) ? 1 : 0; }).slice(0, 5);
+
+                        let tl = cornerArray[0].corner.x < cornerArray[1].corner.x ? cornerArray[0] : cornerArray[1];
+                        let tr = cornerArray[0].corner.x > cornerArray[1].corner.x ? cornerArray[0] : cornerArray[1];
+                        let bl = cornerArray[2].corner.x < cornerArray[3].corner.x ? cornerArray[2] : cornerArray[3];
+                        let br = cornerArray[2].corner.x > cornerArray[3].corner.x ? cornerArray[2] : cornerArray[3];
+
+                        let widthBottom = Math.hypot(br.corner.x - bl.corner.x, br.corner.y - bl.corner.y);
+                        let widthTop = Math.hypot(tr.corner.x - tl.corner.x, tr.corner.y - tl.corner.y);
+                        let theWidth = (widthBottom > widthTop) ? widthBottom : widthTop;
+                        let heightRight = Math.hypot(tr.corner.x - br.corner.x, tr.corner.y - br.corner.y);
+                        let heightLeft = Math.hypot(tl.corner.x - bl.corner.x, tr.corner.y - bl.corner.y);
+                        let theHeight = (heightRight > heightLeft) ? heightRight : heightLeft;
+
+                        let finalDest = new cv.Mat();
+                        let finalDestCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [0, 0, theWidth - 1, 0, theWidth - 1, theHeight - 1, 0, theHeight - 1]); //
+                        let srcCoords = cv.matFromArray(4, 1, cv.CV_32FC2, [tl.corner.x, tl.corner.y, tr.corner.x, tr.corner.y, br.corner.x, br.corner.y, bl.corner.x, bl.corner.y]);
+                        let dsize = new cv.Size(theWidth, theHeight);
+                        let M = cv.getPerspectiveTransform(srcCoords, finalDestCoords);
+                        cv.warpPerspective(srcCaptureArea, finalDest, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+                        
+                        cv.imshow('canvasOutputTransform', finalDest);*/
+
+
+                        resolve({
+                            mat: src,
+                            view: { mat: src, view: srcViewArea, point1: pointRectView1, point2: pointRectView2 }
+                        });
+                    }
+                    else {
+                        reject({
+                            mat: srcViewArea,
+                            rows: poly.rows,
+                            isRectangle: true,
+                            rect: { point1: rectPoint1, point2: rectPoint2 },
+                            view: { point1: pointRectView1, point2: pointRectView2 },
+                            area: { point1: pointRect1, point2: pointRect2 }
+                        });
+                    }
+                }
+                else {
+                    reject({
+                        mat: srcViewArea,
+                        rows: poly.rows,
+                        isRectangle: false,
+                        view: { point1: pointRectView1, point2: pointRectView2 }
+                    });
+                }
+            }
+            catch (e) {
+                console.log(e);
+                reject({
+                    error: e
+                });
+            }
+        });
+    }
+
+
+    function captureCallback(data) {
+        console.log('Ejecutando Capture Callback');
+        const p1 = data.view.point1; const p2 = data.view.point2;
+        //cv.rectangle(data.view, p1, p2, new cv.Scalar(255, 255, 255), 2, cv.LINE_AA, 0);
+        //cv.imshow('canvasOutput', data.view);
+
+        cv.imshow('output', data.mat);
+        stream = undefined;
+        capture = true;
+        let canvas = document.getElementById("output");
+        var image = canvas.toDataURL("image/png");
+        work(image);
+    }
+
+    async function work(image) {
+        await worker.load();
+        await worker.loadLanguage('eng');
+        await worker.initialize('eng');
+        let result = await worker.recognize(image);
+        console.log(result.data);
+        let div = document.createElement('div');
+        div.innerHTML = result.data.hocr.trim();
+        document.body.appendChild(div);
+        await worker.terminate();
+    }
+
+    function feedBackCallBack(data) {
+        if (data.isRectangle) {
+            /*const p1 = data.area.point1; const p2 = data.area.point2;
+            const p1Rect = data.rect.point1; const p2Rect = data.rect.point2;
+
+            const p1View = data.view.point1; const p4View = data.view.point2;
+            const p2View = new cv.Point(p4View.x, p1View.y); const p3View = new cv.Point(p1View.x, p4View.y);
+
+            if (p1Rect.x <= p1.x) { cv.line(data.mat, p1View, p3View, new cv.Scalar(0, 255, 0)); }
+            if (p2Rect.x >= p2.x) { cv.line(data.mat, p3View, p4View, new cv.Scalar(0, 255, 0)); }
+            if (p1Rect.y <= p1.y) { cv.line(data.mat, p1View, p2View, new cv.Scalar(0, 255, 0)); }
+            if (p2Rect.y >= p2.y) { cv.line(data.mat, p3View, p4View, new cv.Scalar(0, 255, 0)); }*/
+        }
+        //cv.imshow('canvasOutput', data.mat);
+    }
+
+    let stream; const FPS = 30;
+    let video = document.getElementById('videoInput');
+    /*navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        .then(function (_stream) {
+            stream = _stream;
+            video.srcObject = stream;
+            video.play();
+        })
+        .catch(function (err) {
+            console.log("An error occurred! " + err);
+        });*/
+    getMedia(hdConstraints);
+    function processVideo() {
+        try {
+            if (!stream) {
+                src.delete()
+                dst.delete();
+                return;
+            }
+            let begin = Date.now();
+            cap.read(src);
+            src.copyTo(dst);
+
+            // let srcRectMaxResolution = new cv.Mat(960, 720, cv.CV_8UC1);
+            // ( 1280 X 720)
+            const heightRect = video.height; //720
+            const widthRect = (640 * (video.height / 480)); //960
+            const xRect = (video.width - widthRect) / 2; //160
+            const yRect = 0; //0
+
+            let rectMaxResolution = new cv.Rect(xRect, yRect, widthRect, heightRect); //(160, 0, 960, 720)
+            // let srcRectMaxResolution = dst.roi(rectMaxResolution).clone();
+            let srcRectMaxResolution = dst.roi(rectMaxResolution);
+
+            // tamVidWidth = 376 - tamVidHeight = 282
+            let srcViewArea = new cv.Mat(tamVidWidth, tamVidHeight, cv.CV_8UC1);
+            let dsize = new cv.Size(tamVidWidth, tamVidHeight);
+            // (960 X 720)  --> (376 X 282)
+            cv.resize(srcRectMaxResolution, srcViewArea, dsize, 0, 0, cv.INTER_AREA);
+            //cv.resize(src, dst, dsize, 0, 0, cv.INTER_AREA);
+
+            //let view = dst.clone();
+            //cv.cvtColor(src, dst, cv.COLOR_RGBA2GRAY);
+
+            //Puntos para el cuadrado d referencia que se muestra.
+            const ratio = 0.63;
+            const anchDocView = (tamVidWidth - 30); // 346
+            const altoDocView = Math.round(anchDocView * ratio); // 218
+            const padHeigh = Math.round((tamVidHeight - altoDocView) / 2); //79
+            const rectPointView1 = new cv.Point(15, padHeigh); // (15, 79)
+            const rectPointView2 = new cv.Point(rectPointView1.x + anchDocView, rectPointView1.y + altoDocView); // (361, 297)
+
+            //Puntos para el cuadrado sobre el que se hace la captura.
+            const anchDocCapture = (tamVidWidth - 20); // 356
+            const altoDocCapture = Math.round(anchDocCapture * ratio); // 224
+            const padHeigh1 = Math.round((tamVidHeight - altoDocCapture) / 2); // 76
+            const pointRectCapture1 = new cv.Point(10, padHeigh1); // (10, 76)
+            const pointRectCapture2 = new cv.Point(pointRectCapture1.x +
+                anchDocCapture, pointRectCapture1.y + altoDocCapture); // (366, 300)
+
+            //Puntos de diferencia entre el cuadro de captura y el de referencia .
+            const anchDocReference = (tamVidHeight - 30);
+            const altoDocReference = Math.round(anchDocReference * ratio);
+            const padHeigh2 = Math.round((tamVidHeight - altoDocReference) / 2);
+            const pointRectReference1 = new cv.Point(15, padHeigh2);
+            const pointRectReference2 = new cv.Point((pointRectReference1.x + anchDocReference),
+                (pointRectReference1.y + altoDocReference));
+
+
+            let rectCapture = new cv.Rect(pointRectCapture1.x, pointRectCapture1.y,
+                (pointRectCapture2.x - pointRectCapture1.x), (pointRectCapture2.y - pointRectCapture1.y));
+
+            let srcRectCapture = new cv.Mat((pointRectCapture2.x - pointRectCapture1.x),
+                (pointRectCapture2.y - pointRectCapture1.y), cv.CV_8UC1);
+            srcRectCapture = srcViewArea.roi(rectCapture).clone();
+
+            cv.rectangle(srcViewArea, rectPointView1, rectPointView2, new cv.Scalar(0, 255, 0), 2, cv.LINE_AA, 0);
+
+            const srcRectCaptureArea = (anchDocCapture * altoDocCapture);
+            cv.imshow('canvasOutput', srcViewArea);
+            captureImage(dst, srcViewArea, rectPointView1, rectPointView2,
+                srcRectCapture, pointRectReference1, pointRectReference2, srcRectCaptureArea).
+                then(data => {
+                    captureCallback(data);
+                }).catch(e => {
+                    feedBackCallBack(e);
+                    let delay = 1000 / FPS - (Date.now() - begin);
+                    setTimeout(processVideo, delay);
+                });
+            /*if (!capture) {
+                let delay = 1000 / FPS - (Date.now() - begin);
+                setTimeout(processVideo, delay);
+            }*/
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    // schedule the first one.
+    setTimeout(() => {
+        worker = Tesseract.createWorker({ logger: m => console.log(m) });
+        Tesseract.setLogging(true);
+        capture = false;
+        tamVidWidth = 376; tamVidHeight = 282;
+        src = new cv.Mat(video.height, video.width, cv.CV_8UC4);
+        dst = new cv.Mat(video.width, video.height, cv.CV_8UC1);
+        //srcRectMaxResolution = new cv.Mat(960, 720, cv.CV_8UC1)
+        cap = new cv.VideoCapture(video);
+        processVideo();
+    }, 5000);
+
+    function gotStream(mediaStream) {
+        stream = window.stream = mediaStream;
+        video.srcObject = mediaStream;
+        /*messagebox.style.display = 'none';*/
+        video.style.display = 'none';
+        const track = mediaStream.getVideoTracks()[0];
+        const constraints = track.getConstraints();
+        console.log('Result constraints: ' + JSON.stringify(constraints));
+        if (constraints && constraints.width && constraints.width.exact) {
+            //widthInput.value = constraints.width.exact;
+            //widthOutput.textContent = constraints.width.exact;
+        } else if (constraints && constraints.width && constraints.width.min) {
+            //widthInput.value = constraints.width.min;
+            //widthOutput.textContent = constraints.width.min;
+        }
+        video.width = constraints.width.exact;
+        video.height = constraints.height.exact;
+        video.play();
+    }
+
+    function getMedia(constraints) {
+        if (stream) {
+            stream.getTracks().forEach(track => {
+                track.stop();
+            });
+        }
+        //video.style.display = 'none';
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(gotStream)
+            .catch(e => {
+                console.log(e);
+                /*errorMessage('getUserMedia', e.message, e.name);*/
+            });
+    }
+
+</script>
+
+</html>
