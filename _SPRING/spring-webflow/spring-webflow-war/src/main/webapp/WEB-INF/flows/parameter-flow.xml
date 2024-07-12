@@ -1,0 +1,18 @@
+<flow xmlns="http://www.springframework.org/schema/webflow"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.springframework.org/schema/webflow
+                          https://www.springframework.org/webflow/spring-webflow.xsd">
+
+    <var name="userDetails" class="es.prueba.ruben.bean.UserDetails"/>
+
+    <view-state id="enterDetails" view="enterDetailsView" model="userDetails">
+        <transition on="submit" to="reviewDetails"/>
+    </view-state>
+
+    <view-state id="reviewDetails" view="reviewDetailsView" model="userDetails">
+        <transition on="confirm" to="finish"/>
+        <transition on="edit" to="enterDetails"/>
+    </view-state>
+
+    <end-state id="finish" view="finishView2"/>
+</flow>

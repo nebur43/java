@@ -1,0 +1,22 @@
+<flow xmlns="http://www.springframework.org/schema/webflow"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.springframework.org/schema/webflow
+                          https://www.springframework.org/webflow/spring-webflow.xsd"
+      start-state="welcome">
+
+	<view-state id="welcome" view="welcomeView">
+        <transition on="proceed" to="calculadora"/>
+    </view-state>
+
+	<subflow-state id="calculadora" subflow="calculadora2">
+		<input name="a" value="123"/>
+		<input name="b" value="223"/>
+		<output name="resultado" value="flowScope.result"/>
+		<transition to="resultado"></transition>
+	</subflow-state>
+
+    <end-state id="resultado" view="resultCalculatorSubflowView">
+    </end-state>
+
+    
+</flow>

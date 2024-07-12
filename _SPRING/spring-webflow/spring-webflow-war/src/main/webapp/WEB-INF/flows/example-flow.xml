@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.springframework.org/schema/webflow
+                          https://www.springframework.org/webflow/spring-webflow.xsd"
+      start-state="welcome">
+
+	<view-state id="welcome" view="welcomeView">
+        <transition on="proceed" to="middle"/>
+    </view-state>
+
+    <view-state id="middle" view="middleView">
+        <transition on="proceed" to="finish"/>
+        <transition on="cancel" to="welcome"/>
+    </view-state>
+
+    <end-state id="finish" view="finishView"/>
+</flow>

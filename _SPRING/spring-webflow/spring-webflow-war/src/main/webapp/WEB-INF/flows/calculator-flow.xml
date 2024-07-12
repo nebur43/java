@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.springframework.org/schema/webflow
+                          https://www.springframework.org/webflow/spring-webflow.xsd"
+      start-state="init">
+
+	<var name="calculadoraBean" class="es.prueba.ruben.bean.CalculadoraBean"/>
+	
+	<on-start>
+	    <set name="flowScope.kkk" value="5061" type="java.lang.Double"/>
+	</on-start>
+
+	<view-state id="init" view="calculatorView" model="calculadoraBean">
+        <transition on="sumar" to="calcular"/>
+    </view-state>
+
+	<action-state id="calcular">
+		<evaluate expression="calculadora.suma(calculadoraBean.a, calculadoraBean.b)" result="flowScope.result"/>
+		<transition to="resultado"/>
+	</action-state>
+
+    <end-state id="resultado" view="resultCalculatorView"/>
+</flow>

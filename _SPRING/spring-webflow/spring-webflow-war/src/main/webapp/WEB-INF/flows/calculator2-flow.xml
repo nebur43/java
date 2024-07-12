@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.springframework.org/schema/webflow
+                          https://www.springframework.org/webflow/spring-webflow.xsd"
+      start-state="calcular">
+
+	<input name="a" type="java.lang.Double" required="true"/>
+	<input name="b" type="java.lang.Double" required="true"/>
+	
+	<action-state id="calcular">
+		<evaluate expression="calculadora.suma(a, b)" result="flowScope.result"/>
+		<transition to="resultado"/>
+	</action-state>
+
+    <end-state id="resultado" view="resultCalculatorView">
+    	<output name="resultado" value="flowScope.result"/>
+    </end-state>
+</flow>
