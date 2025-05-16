@@ -16,6 +16,11 @@ import com.openai.models.responses.Response;
 import com.openai.models.responses.ResponseCreateParams;
 import com.openai.models.responses.ResponseInputItem;
 
+/**
+ * https://github.com/openai/openai-java
+ * 
+ * Unit test for simple App.
+ */
 public class BasicResponseApiTest {
 
 	private static final Logger LOGGER = LogManager.getLogger(BasicResponseApiTest.class);
