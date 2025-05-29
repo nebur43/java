@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nebur.openai_client.util.JsonUtil;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
 import com.openai.models.ChatModel;
@@ -47,7 +48,7 @@ public class BasicResponseApiTest {
     	        .build();
     	Response response = client.responses().create(params);
     	   	
-    	LOGGER.info("Response: {}", json(response) );
+    	LOGGER.info("Response: {}", JsonUtil.parse(response) );
     	LOGGER.info("Response.content: {}", response.output().get(0).asMessage().content().get(0).outputText().get().text() );
     	
     }
@@ -95,15 +96,6 @@ public class BasicResponseApiTest {
 		});
     }
     
-    
-    private String json(Object obj) {
-		try {
-			return mapper.writeValueAsString(obj);
-		} catch (Exception e) {
-			LOGGER.error("Error serializing object to JSON", e);
-			return null;
-		}
-    }
     
     
 }

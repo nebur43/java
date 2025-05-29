@@ -23,6 +23,13 @@
 	  <artifactId>openai-java</artifactId>
 	  <version>1.5.1</version>
 	</dependency>
+
+	<!-- para busquedas de vectores -->	
+	<dependency>
+	    <groupId>com.fasterxml.jackson.datatype</groupId>
+	    <artifactId>jackson-datatype-jdk8</artifactId>
+	    <version>2.18.2</version>
+	</dependency>	
 	
 	<dependency>
 	    <groupId>org.apache.logging.log4j</groupId>
