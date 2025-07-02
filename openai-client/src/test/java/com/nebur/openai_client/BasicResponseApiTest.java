@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nebur.openai_client.util.JsonUtil;
 import com.openai.client.OpenAIClient;
 import com.openai.client.okhttp.OpenAIOkHttpClient;
@@ -25,10 +24,6 @@ import com.openai.models.responses.ResponseInputItem;
 public class BasicResponseApiTest {
 
 	private static final Logger LOGGER = LogManager.getLogger(BasicResponseApiTest.class);
-	
-	private ObjectMapper mapper = new ObjectMapper();
-
-	
 	
 	/**
 	 * The primary API for interacting with OpenAI models is the Responses API.
